@@ -4036,10 +4036,10 @@ class wpdb {
 		$charset_collate = '';
 
 		if ( ! empty( $this->charset ) ) {
-			$charset_collate = "DEFAULT CHARACTER SET $this->charset";
+			$charset_collate = "DEFAULT CHARACTER SET utf8";
 		}
 		if ( ! empty( $this->collate ) ) {
-			$charset_collate .= " COLLATE $this->collate";
+			$charset_collate .= " COLLATE utf8_general_ci";
 		}
 
 		return $charset_collate;
