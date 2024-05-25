@@ -278,7 +278,7 @@ function get_comment_statuses() {
  *
  * @param string $post_type    Optional. Post type. Default 'post'.
  * @param string $comment_type Optional. Comment type. Default 'comment'.
- * @return string Either 'open' or 'closed'.
+ * @return string Expected return value is 'open' or 'closed'.
  */
 function get_default_comment_status( $post_type = 'post', $comment_type = 'comment' ) {
 	switch ( $comment_type ) {
@@ -396,7 +396,6 @@ function get_comment_count( $post_id = 0 ) {
 	$args = array(
 		'count'                     => true,
 		'update_comment_meta_cache' => false,
-		'orderby'                   => 'none',
 	);
 	if ( $post_id > 0 ) {
 		$args['post_id'] = $post_id;
@@ -1031,7 +1030,7 @@ function get_comment_pages_count( $comments = null, $per_page = null, $threaded 
 		$count = ceil( count( $comments ) / $per_page );
 	}
 
-	return (int) $count;
+	return $count;
 }
 
 /**
@@ -1115,7 +1114,6 @@ function get_page_of_comment( $comment_id, $args = array() ) {
 			'fields'     => 'ids',
 			'count'      => true,
 			'status'     => 'approve',
-			'orderby'    => 'none',
 			'parent'     => 0,
 			'date_query' => array(
 				array(
@@ -1170,7 +1168,7 @@ function get_page_of_comment( $comment_id, $args = array() ) {
 
 			// Divide comments older than this one by comments per page to get this comment's page number.
 		} else {
-			$page = (int) ceil( ( $older_comment_count + 1 ) / $args['per_page'] );
+			$page = ceil( ( $older_comment_count + 1 ) / $args['per_page'] );
 		}
 	}
 
@@ -2702,6 +2700,7 @@ function wp_update_comment_count( $post_id, $do_deferred = false ) {
 	} elseif ( $post_id ) {
 		return wp_update_comment_count_now( $post_id );
 	}
+
 }
 
 /**
@@ -3174,10 +3173,10 @@ function privacy_ping_filter( $sites ) {
  * @param string $trackback_url URL to send trackbacks.
  * @param string $title         Title of post.
  * @param string $excerpt       Excerpt of post.
- * @param int    $post_id       Post ID.
+ * @param int    $ID            Post ID.
  * @return int|false|void Database query from update.
  */
-function trackback( $trackback_url, $title, $excerpt, $post_id ) {
+function trackback( $trackback_url, $title, $excerpt, $ID ) {
 	global $wpdb;
 
 	if ( empty( $trackback_url ) ) {
@@ -3188,7 +3187,7 @@ function trackback( $trackback_url, $title, $excerpt, $post_id ) {
 	$options['timeout'] = 10;
 	$options['body']    = array(
 		'title'     => $title,
-		'url'       => get_permalink( $post_id ),
+		'url'       => get_permalink( $ID ),
 		'blog_name' => get_option( 'blogname' ),
 		'excerpt'   => $excerpt,
 	);
@@ -3199,8 +3198,8 @@ function trackback( $trackback_url, $title, $excerpt, $post_id ) {
 		return;
 	}
 
-	$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET pinged = CONCAT(pinged, '\n', %s) WHERE ID = %d", $trackback_url, $post_id ) );
-	return $wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET to_ping = TRIM(REPLACE(to_ping, %s, '')) WHERE ID = %d", $trackback_url, $post_id ) );
+	$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET pinged = CONCAT(pinged, '\n', %s) WHERE ID = %d", $trackback_url, $ID ) );
+	return $wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET to_ping = TRIM(REPLACE(to_ping, %s, '')) WHERE ID = %d", $trackback_url, $ID ) );
 }
 
 /**
@@ -3685,8 +3684,8 @@ function wp_handle_comment_submission( $comment_data ) {
  *
  * @since 4.9.6
  *
- * @param array[] $exporters An array of personal data exporters.
- * @return array[] An array of personal data exporters.
+ * @param array $exporters An array of personal data exporters.
+ * @return array An array of personal data exporters.
  */
 function wp_register_comment_personal_data_exporter( $exporters ) {
 	$exporters['wordpress-comments'] = array(
@@ -3703,13 +3702,8 @@ function wp_register_comment_personal_data_exporter( $exporters ) {
  * @since 4.9.6
  *
  * @param string $email_address The comment author email address.
- * @param int    $page          Comment page number.
- * @return array {
- *     An array of personal data.
- *
- *     @type array[] $data An array of personal data arrays.
- *     @type bool    $done Whether the exporter is finished.
- * }
+ * @param int    $page          Comment page.
+ * @return array An array of personal data.
  */
 function wp_comments_personal_data_exporter( $email_address, $page = 1 ) {
 	// Limit us to 500 comments at a time to avoid timing out.
@@ -3820,15 +3814,8 @@ function wp_register_comment_personal_data_eraser( $erasers ) {
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $email_address The comment author email address.
- * @param int    $page          Comment page number.
- * @return array {
- *     Data removal results.
- *
- *     @type bool     $items_removed  Whether items were actually removed.
- *     @type bool     $items_retained Whether items were retained.
- *     @type string[] $messages       An array of messages to add to the personal data export file.
- *     @type bool     $done           Whether the eraser is finished.
- * }
+ * @param int    $page          Comment page.
+ * @return array
  */
 function wp_comments_personal_data_eraser( $email_address, $page = 1 ) {
 	global $wpdb;
