@@ -2,7 +2,7 @@ service: serverlesswp-wordpress-starter
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   httpApi:
     payload: '2.0'
 
